@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(test:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(python -m pip install:*)",
+      "Bash(ruff check:*)",
+      "Bash(black:*)",
+      "Bash(python -m mypy:*)",
+      "Bash(python -m pylint:*)",
+      "Bash(python -m flake8:*)",
+      "Bash(python -m ruff:*)",
+      "Bash(python -m black:*)",
+      "Bash(python3 -m pytest:*)",
+      "Bash(mypy:*)",
+      "Bash(python:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

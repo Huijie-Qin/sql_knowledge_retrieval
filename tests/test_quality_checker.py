@@ -107,7 +107,7 @@ def test_run_full_check():
         (test_subdir / "table3.md").write_text("# table2\n## 1.1.数据源描述\n测试表2", encoding="utf-8")
 
         checker = QualityChecker()
-        report_file = checker.run(used_tables=["table1", "table2", "table3"])
+        report_file, merge_results = checker.run(used_tables=["table1", "table2", "table3"])
 
         # Verify report was generated
         assert report_file.exists()

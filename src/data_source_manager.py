@@ -27,10 +27,16 @@ class DataSourceManager:
         file_path.write_text(content, encoding="utf-8")
         return file_path
 
-    def merge_data_source(self, old_content: str, new_data: Dict[str, Any]) -> Tuple[str, List[str]]:
-        """合并新旧数据源信息，返回合并后的内容和更新点"""
-        # 先生成新数据源的markdown
-        new_content = self._generate_markdown(new_data)
+    def merge_data_source(self, old_content: str, new_data: Dict[str, Any] = None, new_content: str = None) -> Tuple[str, List[str]]:
+        """
+        合并新旧数据源信息，返回合并后的内容和更新点
+        可以传入结构化的new_data，或者直接传入已经生成好的new_content
+        """
+        if new_content is None:
+            if new_data is None:
+                raise ValueError("Either new_data or new_content must be provided")
+            # 生成新数据源的markdown
+            new_content = self._generate_markdown(new_data)
 
         # 调用LLM进行智能合并
         prompt = self.prompt_manager.get_prompt(

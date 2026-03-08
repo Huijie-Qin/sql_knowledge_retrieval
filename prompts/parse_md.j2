@@ -1,0 +1,44 @@
+{# prompts/parse_md.j2 #}
+你是专业的SQL数据源分析师，请解析以下Markdown案例文件内容，提取其中的数据源信息。
+
+文件内容：
+{{ content }}
+
+请严格按照以下JSON格式返回结果，不要添加任何额外说明：
+{
+  "business_domain": "识别所属业务域（广告/应用/音乐/公共/全域搜索/电商/其他）",
+  "data_sources": [
+    {
+      "table_name": "完整表名",
+      "description": "数据源描述",
+      "fields": [
+        {
+          "name": "字段名",
+          "description": "字段描述",
+          "usage": "用途说明"
+        }
+      ],
+      "sql_examples": [
+        {
+          "name": "示例名称",
+          "sql": "SQL代码"
+        }
+      ],
+      "usage_instructions": "使用说明",
+      "notes": "注意事项",
+      "data_quality": {
+        "daily_records": "日记录数",
+        "daily_users": "日覆盖用户数",
+        "coverage": "数据覆盖情况",
+        "timeliness": "上报及时性"
+      },
+      "related_cases": [
+        {
+          "name": "案例名称",
+          "type": "案例类型",
+          "scenario": "使用场景"
+        }
+      ]
+    }
+  ]
+}

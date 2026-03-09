@@ -127,10 +127,11 @@ class DataSourceManager:
         md += "## 2.数据表结构\n\n"
         md += f"### 2.1.表名\n{data['table_name']}\n\n"
         md += "### 2.2.关键字段\n"
-        md += "| 字段名|字段描述 | 用途说明|\n"
-        md += "|----------|----------|----------|\n"
+        md += "| 字段名|字段描述 | 用途说明 | 枚举值说明|\n"
+        md += "|----------|----------|----------|----------|\n"
         for field in data.get("fields", []):
-            md += f"|{field['name']}|{field.get('description', '')}|{field.get('usage', '')}|\n"
+            enum_values = field.get("enum_values", "")
+            md += f"|{field['name']}|{field.get('description', '')}|{field.get('usage', '')}|{enum_values}|\n"
         md += "\n"
 
         md += "## 3.SQL使用示例\n\n"
@@ -175,6 +176,8 @@ class DataSourceManager:
             update_points.append("新增SQL示例")
         if "字段名" in added_text:
             update_points.append("补充字段说明")
+        if "枚举值说明" in added_text or "enum_values" in added_text:
+            update_points.append("更新字段枚举值")
         if "数据质量" in added_text or "日记录数" in added_text:
             update_points.append("更新数据质量信息")
         if "关联案例" in added_text or "案例名称" in added_text:

@@ -62,20 +62,28 @@ class DataSourceParser:
         self.progress_manager.mark_file_processed(file_path)
         print(f"Completed processing: {file_path}")
 
-    def run(self):
-        """运行完整解析流程"""
+    def run(self, force_full: bool = False):
+        """
+        运行完整解析流程
+        :param force_full: 是否强制全量重新处理所有文件（默认False，增量处理）
+        """
         print("Starting data source parsing...")
+
+        # 全量模式下重置所有进度
+        if force_full:
+            print("Force full mode: resetting all progress, will reprocess all files")
+            self.progress_manager.reset_progress()
 
         # 扫描所有源文件
         all_files = self.scan_source_files()
         print(f"Found {len(all_files)} source files")
 
-        # 添加到待解析列表
-        self.progress_manager.add_pending_files(all_files)
+        # 添加到待解析列表：全量模式下不跳过已处理文件
+        self.progress_manager.add_pending_files(all_files, skip_processed=not force_full)
 
         # 获取待处理文件
         pending_files = self.progress_manager.get_pending_files()
-        print(f"Pending files: {len(pending_files)}")
+        print(f"Pending files to process: {len(pending_files)}")
 
         # 逐个处理
         for file in pending_files:

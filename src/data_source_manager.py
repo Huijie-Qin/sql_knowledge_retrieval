@@ -119,27 +119,15 @@ class DataSourceManager:
     def _generate_markdown(self, data: Dict[str, Any]) -> str:
         """生成数据源文件的Markdown内容"""
         md = f"# {data['table_name']}\n\n"
-        md += "## 数据源基本信息\n"
-        md += f"\t- 表名：{data.get('table_name', '')}\n"
-        md += f"\t- 业务域：{data.get('business_domain', '')}\n"
-        md += f"\t- 数据库：{data.get('database', data.get('table_name', '').split('.')[0] if '.' in data.get('table_name', '') else '')}\n"
-        md += f"\t- 雪花层：{data.get('snowflake_layer', '')}\n"
-        md += f"\t- 分区字段：{data.get('partition_field', '')}\n"
-        md += f"\t- 主要用途：{data.get('main_usage', '')}\n"
-        md += f"\t- 数据源描述：{data.get('description', '')}\n\n"
-
-        # 业务场景
-        scenarios = data.get("typical_application_scenarios", [])
-        if scenarios:
-            md += "## 业务场景\n"
-            for scenario in scenarios:
-                md += f"{scenario}\n"
-            md += "\n"
+        md += "## 1.数据源基本信息\n\n"
+        md += f"### 1.1.数据源名称\n{data.get('name', data['table_name'])}\n\n"
+        md += f"### 1.2.数据源描述\n{data.get('description', '')}\n\n"
+        md += f"### 1.3.业务域\n{data.get('business_domain', '')}\n\n"
 
         md += "## 2.数据表结构\n\n"
         md += f"### 2.1.表名\n{data['table_name']}\n\n"
         md += "### 2.2.关键字段\n"
-        md += "| 字段名|字段描述 | 用途说明 | 枚举值说明|\n"
+        md += "| 字段名|字段描述 | 用途说明| 关键的字段值的描述|\n"
         md += "|----------|----------|----------|----------|\n"
         for field in data.get("fields", []):
             enum_values = field.get("enum_values", "")
@@ -155,38 +143,19 @@ class DataSourceManager:
             md += example["sql"]
             md += "\n```\n\n"
 
-        # 关键查询模式
-        key_patterns = data.get("key_query_patterns", [])
-        if key_patterns:
-            md += "## 4.关键查询模式\n\n"
-            for pattern in key_patterns:
-                md += f"- {pattern}\n"
-            md += "\n"
+        md += "## 4.使用说明和注意事项\n\n"
+        md += f"### 4.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
+        md += f"### 4.2.注意事项\n{data.get('notes', '')}\n\n"
 
-        # 常用关联表
-        related_tables = data.get("common_related_tables", [])
-        if related_tables:
-            md += "## 5.常用关联表\n\n"
-            md += "| 表名 | 关联字段 | 关联用途 |\n"
-            md += "|------|----------|----------|\n"
-            for table in related_tables:
-                md += f"|{table.get('table_name', '')}|{table.get('join_field', '')}|{table.get('usage', '')}|\n"
-            md += "\n"
-
-        # 调整后续章节编号 - 典型应用场景已经移动到前面作为"业务场景"章节
-        md += "## 6.使用说明和注意事项\n\n"
-        md += f"### 6.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
-        md += f"### 6.2.注意事项\n{data.get('notes', '')}\n\n"
-
-        md += "## 7.数据质量说明\n\n"
+        md += "## 5.数据质量说明\n\n"
         quality = data.get("data_quality", {})
-        md += "### 7.1.数据量\n"
+        md += "### 5.1.数据量\n"
         md += f"\t- 日记录数：{quality.get('daily_records', '')}\n"
         md += f"\t- 日覆盖用户数：{quality.get('daily_users', '')}\n\n"
-        md += f"### 7.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
-        md += f"### 7.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
+        md += f"### 5.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
+        md += f"### 5.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
 
-        md += "## 8.关联案例\n"
+        md += "## 6.关联案例\n"
         md += "|案例名称|案例类型|使用场景|\n"
         md += "|------------|------------|------------|\n"
         for case in data.get("related_cases", []):

@@ -27,12 +27,21 @@ class FileParser:
         if response.endswith("```"):
             response = response[:-3].strip()
 
-        # 清理过度转义的反斜杠，处理 " -> \" -> \\" 等多层转义
+        # 清理过度转义的反斜杠，处理 " -> \" -> \\" 等多层转义，同时保留合法的转义序列
         def unescape_json(s: str) -> str:
-            # 先处理最外层的转义引号
-            s = re.sub(r'\\+(")', r'\1', s)
-            # 处理转义的反斜杠本身
-            s = re.sub(r'\\\\', r'\\', s)
+            # 首先处理多层转义的引号：将 \\\" 变为 \"，将 \\\\\" 变为 \\\" 等，保持正确的转义层级
+            s = re.sub(r'\\+(")', lambda m: '\\' * (len(m.group(0)) // 2) + '"', s)
+
+            # 处理无效的转义序列：将 \ 后面不是合法JSON转义字符的情况替换为普通的 \
+            # JSON合法转义字符：" \ / b f n r t uXXXX
+            def replace_invalid_escape(match):
+                escape_char = match.group(1)
+                if escape_char in '"\\/bfnrtu':
+                    return match.group(0)
+                # 无效转义，保留反斜杠和字符，或只保留字符？这里选择保留字符，避免解析错误
+                return escape_char
+
+            s = re.sub(r'\\(.)', replace_invalid_escape, s)
             return s
 
         # 尝试清理转义
@@ -74,20 +83,24 @@ class FileParser:
         try:
             return json.loads(response)
         except json.JSONDecodeError:
-            # 尝试修复后解析
+            # 尝试用strict=False模式解析，允许控制字符和一些格式问题
             try:
-                fixed_response = fix_incomplete_json(response)
-                return json.loads(fixed_response)
+                return json.loads(response, strict=False)
             except json.JSONDecodeError:
-                # 尝试用正则提取JSON部分
-                match = re.search(r'\{.*\}', response, re.DOTALL)
-                if match:
-                    try:
-                        return json.loads(match.group(0))
-                    except:
-                        pass
-                # 所有方法都失败
-                raise ValueError(f"Failed to parse JSON after fix attempts: {response[:500]}...")
+                # 尝试修复后解析
+                try:
+                    fixed_response = fix_incomplete_json(response)
+                    return json.loads(fixed_response, strict=False)
+                except json.JSONDecodeError:
+                    # 尝试用正则提取JSON部分
+                    match = re.search(r'\{.*\}', response, re.DOTALL)
+                    if match:
+                        try:
+                            return json.loads(match.group(0), strict=False)
+                        except:
+                            pass
+                    # 所有方法都失败
+                    raise ValueError(f"Failed to parse JSON after fix attempts: {response[:500]}...")
 
     def parse_md(self, content: str) -> Dict[str, Any]:
         prompt = self.prompt_manager.get_prompt("parse_md", content=content)

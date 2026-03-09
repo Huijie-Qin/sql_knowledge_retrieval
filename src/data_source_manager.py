@@ -119,10 +119,22 @@ class DataSourceManager:
     def _generate_markdown(self, data: Dict[str, Any]) -> str:
         """生成数据源文件的Markdown内容"""
         md = f"# {data['table_name']}\n\n"
-        md += "## 1.数据源基本信息\n\n"
-        md += f"### 1.1.数据源名称\n{data.get('name', data['table_name'])}\n\n"
-        md += f"### 1.2.数据源描述\n{data.get('description', '')}\n\n"
-        md += f"### 1.3.业务域\n{data.get('business_domain', '')}\n\n"
+        md += "## 数据源基本信息\n"
+        md += f"\t- 表名：{data.get('table_name', '')}\n"
+        md += f"\t- 业务域：{data.get('business_domain', '')}\n"
+        md += f"\t- 数据库：{data.get('database', data.get('table_name', '').split('.')[0] if '.' in data.get('table_name', '') else '')}\n"
+        md += f"\t- 雪花层：{data.get('snowflake_layer', '')}\n"
+        md += f"\t- 分区字段：{data.get('partition_field', '')}\n"
+        md += f"\t- 主要用途：{data.get('main_usage', '')}\n"
+        md += f"\t- 数据源描述：{data.get('description', '')}\n\n"
+
+        # 业务场景
+        scenarios = data.get("typical_application_scenarios", [])
+        if scenarios:
+            md += "## 业务场景\n"
+            for scenario in scenarios:
+                md += f"{scenario}\n"
+            md += "\n"
 
         md += "## 2.数据表结构\n\n"
         md += f"### 2.1.表名\n{data['table_name']}\n\n"
@@ -161,28 +173,20 @@ class DataSourceManager:
                 md += f"|{table.get('table_name', '')}|{table.get('join_field', '')}|{table.get('usage', '')}|\n"
             md += "\n"
 
-        # 典型应用场景
-        scenarios = data.get("typical_application_scenarios", [])
-        if scenarios:
-            md += "## 6.典型应用场景\n\n"
-            for scenario in scenarios:
-                md += f"- {scenario}\n"
-            md += "\n"
+        # 调整后续章节编号 - 典型应用场景已经移动到前面作为"业务场景"章节
+        md += "## 6.使用说明和注意事项\n\n"
+        md += f"### 6.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
+        md += f"### 6.2.注意事项\n{data.get('notes', '')}\n\n"
 
-        # 调整后续章节编号
-        md += "## 7.使用说明和注意事项\n\n"
-        md += f"### 7.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
-        md += f"### 7.2.注意事项\n{data.get('notes', '')}\n\n"
-
-        md += "## 8.数据质量说明\n\n"
+        md += "## 7.数据质量说明\n\n"
         quality = data.get("data_quality", {})
-        md += "### 8.1.数据量\n"
+        md += "### 7.1.数据量\n"
         md += f"\t- 日记录数：{quality.get('daily_records', '')}\n"
         md += f"\t- 日覆盖用户数：{quality.get('daily_users', '')}\n\n"
-        md += f"### 8.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
-        md += f"### 8.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
+        md += f"### 7.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
+        md += f"### 7.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
 
-        md += "## 9.关联案例\n"
+        md += "## 8.关联案例\n"
         md += "|案例名称|案例类型|使用场景|\n"
         md += "|------------|------------|------------|\n"
         for case in data.get("related_cases", []):
@@ -208,12 +212,14 @@ class DataSourceManager:
             update_points.append("补充字段说明")
         if "枚举值说明" in added_text or "enum_values" in added_text:
             update_points.append("更新字段枚举值")
+        if any(k in added_text for k in ["数据库：", "雪花层：", "分区字段：", "主要用途："]):
+            update_points.append("更新数据源基本信息")
+        if "业务场景" in added_text:
+            update_points.append("补充业务场景信息")
         if "关键查询模式" in added_text:
             update_points.append("补充关键查询模式")
         if "常用关联表" in added_text:
             update_points.append("新增常用关联表信息")
-        if "典型应用场景" in added_text:
-            update_points.append("补充典型应用场景")
         if "数据质量" in added_text or "日记录数" in added_text:
             update_points.append("更新数据质量信息")
         if "关联案例" in added_text or "案例名称" in added_text:

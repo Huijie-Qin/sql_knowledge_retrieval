@@ -10,7 +10,11 @@
   "business_domain": "从文件名和内容推断业务域（广告/应用/音乐/公共/全域搜索/电商/其他）",
   "data_sources": [
     {
-      "table_name": "完整表名",
+      "table_name": "完整表名（如：biads.ads_persona_daas_common_pre_traffic_insight_dm）",
+      "database": "数据库名（从表名前缀提取，如biads）",
+      "snowflake_layer": "雪花层（从表名和内容推断，如：ADS（应用数据层）- DAAS画像/流量洞察、DWD（明细数据层）等，没有则留空）",
+      "partition_field": "分区字段（从SQL的WHERE条件中提取，如pt_d）",
+      "main_usage": "主要用途（从案例文件中提取并推理得到的表的主要用途）",
       "description": "数据源描述",
       "fields": [
         {

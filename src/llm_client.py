@@ -20,7 +20,7 @@ class LLMClient:
             model=self.model,
             messages=messages,
             temperature=0.1,
-            max_tokens=4096
+            max_tokens=8192
         )
 
         return response.choices[0].message.content.strip()

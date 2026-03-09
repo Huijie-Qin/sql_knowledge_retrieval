@@ -147,6 +147,32 @@ class DataSourceManager:
         md += f"### 4.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
         md += f"### 4.2.注意事项\n{data.get('notes', '')}\n\n"
 
+        # 关键的查询模式
+        key_patterns = data.get("key_query_patterns", [])
+        if key_patterns:
+            md += "### 4.3.关键的查询模式\n"
+            for pattern in key_patterns:
+                md += f"- {pattern}\n"
+            md += "\n"
+
+        # 常用关联表
+        related_tables = data.get("common_related_tables", [])
+        if related_tables:
+            md += "### 4.4.常用关联表\n"
+            md += "| 表名 | 关联字段 | 关联用途 |\n"
+            md += "|------|----------|----------|\n"
+            for table in related_tables:
+                md += f"|{table.get('table_name', '')}|{table.get('join_field', '')}|{table.get('usage', '')}|\n"
+            md += "\n"
+
+        # 典型应用场景
+        scenarios = data.get("typical_application_scenarios", [])
+        if scenarios:
+            md += "### 4.5.典型应用场景\n"
+            for scenario in scenarios:
+                md += f"- {scenario}\n"
+            md += "\n"
+
         md += "## 5.数据质量说明\n\n"
         quality = data.get("data_quality", {})
         md += "### 5.1.数据量\n"
@@ -195,6 +221,12 @@ class DataSourceManager:
             update_points.append("新增关联案例")
         if "使用说明" in added_text or "注意事项" in added_text:
             update_points.append("完善使用信息")
+        if "关键的查询模式" in added_text:
+            update_points.append("补充关键的查询模式")
+        if "常用关联表" in added_text:
+            update_points.append("补充常用关联表信息")
+        if "典型应用场景" in added_text:
+            update_points.append("补充典型应用场景")
         if any(k in added_text for k in ["数据源描述", "字段描述"]):
             update_points.append("修正描述信息")
 

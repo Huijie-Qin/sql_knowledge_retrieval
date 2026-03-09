@@ -137,29 +137,59 @@ class DataSourceManager:
         md += "## 3.SQL使用示例\n\n"
         for i, example in enumerate(data.get("sql_examples", []), 1):
             md += f"### 3.{i}.{example['name']}\n"
+            if example.get("description"):
+                md += f"{example['description']}\n\n"
             md += "```sql\n"
             md += example["sql"]
             md += "\n```\n\n"
 
-        md += "## 4.使用说明和注意事项\n\n"
-        md += f"### 4.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
-        md += f"### 4.2.注意事项\n{data.get('notes', '')}\n\n"
+        # 关键查询模式
+        key_patterns = data.get("key_query_patterns", [])
+        if key_patterns:
+            md += "## 4.关键查询模式\n\n"
+            for pattern in key_patterns:
+                md += f"- {pattern}\n"
+            md += "\n"
 
-        md += "## 5.数据质量说明\n\n"
+        # 常用关联表
+        related_tables = data.get("common_related_tables", [])
+        if related_tables:
+            md += "## 5.常用关联表\n\n"
+            md += "| 表名 | 关联字段 | 关联用途 |\n"
+            md += "|------|----------|----------|\n"
+            for table in related_tables:
+                md += f"|{table.get('table_name', '')}|{table.get('join_field', '')}|{table.get('usage', '')}|\n"
+            md += "\n"
+
+        # 典型应用场景
+        scenarios = data.get("typical_application_scenarios", [])
+        if scenarios:
+            md += "## 6.典型应用场景\n\n"
+            for scenario in scenarios:
+                md += f"- {scenario}\n"
+            md += "\n"
+
+        # 调整后续章节编号
+        md += "## 7.使用说明和注意事项\n\n"
+        md += f"### 7.1.使用说明\n{data.get('usage_instructions', '')}\n\n"
+        md += f"### 7.2.注意事项\n{data.get('notes', '')}\n\n"
+
+        md += "## 8.数据质量说明\n\n"
         quality = data.get("data_quality", {})
-        md += "### 5.1.数据量\n"
+        md += "### 8.1.数据量\n"
         md += f"\t- 日记录数：{quality.get('daily_records', '')}\n"
         md += f"\t- 日覆盖用户数：{quality.get('daily_users', '')}\n\n"
-        md += f"### 5.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
-        md += f"### 5.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
+        md += f"### 8.2.数据覆盖情况\n{quality.get('coverage', '')}\n\n"
+        md += f"### 8.3.上报及时性\n{quality.get('timeliness', '')}\n\n"
 
-        md += "## 6.关联案例\n"
+        md += "## 9.关联案例\n"
         md += "|案例名称|案例类型|使用场景|\n"
         md += "|------------|------------|------------|\n"
         for case in data.get("related_cases", []):
             md += f"|{case['name']}|{case.get('type', '')}|{case.get('scenario', '')}|\n"
 
         return md
+
 
     def _detect_update_points(self, old_content: str, new_content: str) -> List[str]:
         """检测更新点，返回更新类型列表"""
@@ -178,6 +208,12 @@ class DataSourceManager:
             update_points.append("补充字段说明")
         if "枚举值说明" in added_text or "enum_values" in added_text:
             update_points.append("更新字段枚举值")
+        if "关键查询模式" in added_text:
+            update_points.append("补充关键查询模式")
+        if "常用关联表" in added_text:
+            update_points.append("新增常用关联表信息")
+        if "典型应用场景" in added_text:
+            update_points.append("补充典型应用场景")
         if "数据质量" in added_text or "日记录数" in added_text:
             update_points.append("更新数据质量信息")
         if "关联案例" in added_text or "案例名称" in added_text:

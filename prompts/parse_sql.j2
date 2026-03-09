@@ -16,14 +16,31 @@
         {
           "name": "字段名",
           "description": "字段描述",
-          "usage": "用途说明"
+          "usage": "用途说明",
+          "enum_values": "字段的常用枚举值及含义，从SQL的WHERE条件、CASE语句、注释等地方提取，格式如：枚举值1:含义1,枚举值2:含义2，没有则留空"
         }
       ],
       "sql_examples": [
         {
-          "name": "示例名称",
-          "sql": "SQL代码"
+          "name": "示例名称（详细描述这个SQL的用途）",
+          "sql": "SQL代码",
+          "description": "详细的SQL示例说明，包括：适用场景、输入参数、输出结果、统计维度等信息"
         }
+      ],
+      "key_query_patterns": [
+        "关键查询模式1（如：按日期分区查询、按事件类型分组统计、按品类维度聚合等，每条用一句话描述）",
+        "关键查询模式2"
+      ],
+      "common_related_tables": [
+        {
+          "table_name": "关联表名",
+          "join_field": "关联字段",
+          "usage": "关联用途说明"
+        }
+      ],
+      "typical_application_scenarios": [
+        "典型应用场景1（如：广告投放效果分析、电商品类转化分析、用户行为画像等）",
+        "典型应用场景2"
       ],
       "usage_instructions": "使用说明",
       "notes": "注意事项",

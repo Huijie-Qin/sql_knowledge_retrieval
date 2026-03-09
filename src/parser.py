@@ -27,6 +27,17 @@ class FileParser:
         if response.endswith("```"):
             response = response[:-3].strip()
 
+        # 清理过度转义的反斜杠，处理 " -> \" -> \\" 等多层转义
+        def unescape_json(s: str) -> str:
+            # 先处理最外层的转义引号
+            s = re.sub(r'\\+(")', r'\1', s)
+            # 处理转义的反斜杠本身
+            s = re.sub(r'\\\\', r'\\', s)
+            return s
+
+        # 尝试清理转义
+        response = unescape_json(response)
+
         # 尝试修复不完整的JSON（自动补全闭合）
         def fix_incomplete_json(s: str) -> str:
             # 计数括号和引号

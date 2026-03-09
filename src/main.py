@@ -43,22 +43,19 @@ class DataSourceParser:
             ds["business_domain"] = business_domain
             table_name = ds["table_name"]
 
-            if self.data_source_manager.exists(table_name, business_domain):
-                # 更新现有数据源
-                ds_file_path, update_points = self.data_source_manager.update_data_source(
-                    table_name, business_domain, ds
-                )
-                operation_type = "更新数据源"
-                print(f"Updated data source: {table_name}, updates: {update_points}")
-            else:
-                # 创建新数据源
-                ds_file_path = self.data_source_manager.create_data_source(ds, business_domain)
-                update_points = []
-                operation_type = "新建数据源"
-                print(f"Created data source: {table_name}")
+            # 智能判断：全局存在则更新，否则新建（自动处理跨业务域重复问题）
+            ds_file_path, operation_type, update_points = self.data_source_manager.create_or_update_data_source(
+                table_name, business_domain, ds
+            )
 
-            # 更新进度
-            self.progress_manager.add_data_source_index(table_name, business_domain, ds_file_path)
+            if operation_type == "更新数据源":
+                print(f"Updated existing data source: {table_name}, updates: {update_points}")
+            else:
+                print(f"Created new data source: {table_name} in {business_domain} domain")
+
+            # 更新进度：使用文件实际所在的业务域（可能和当前解析的不同）
+            actual_business_domain = ds_file_path.parent.name
+            self.progress_manager.add_data_source_index(table_name, actual_business_domain, ds_file_path)
             self.progress_manager.add_parse_record(table_name, operation_type, update_points)
 
         # 标记文件为已处理

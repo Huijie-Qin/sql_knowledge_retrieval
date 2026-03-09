@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Any, Tuple, List
+from typing import Dict, Any, Tuple, List, Optional
 from src.llm_client import LLMClient
 from src.prompt_manager import PromptManager
 from config.settings import settings
@@ -16,8 +16,41 @@ class DataSourceManager:
         domain_dir.mkdir(parents=True, exist_ok=True)
         return domain_dir / f"{table_name}.md"
 
-    def exists(self, table_name: str, business_domain: str) -> bool:
-        return self._get_data_source_path(table_name, business_domain).exists()
+    def find_data_source(self, table_name: str) -> Optional[Path]:
+        """
+        全局查找指定表名的数据源文件，搜索所有业务域目录
+        返回找到的文件路径，如果不存在返回None
+        如果找到多个重复的，返回内容最多的那个
+        """
+        matched_files = []
+        for md_file in self.output_dir.rglob("*.md"):
+            if md_file.name in ["解析进度.md", "检查报告.md"]:
+                continue
+            try:
+                first_line = md_file.read_text(encoding="utf-8").splitlines()[0].strip()
+                if first_line.startswith("# ") and first_line[2:].strip() == table_name:
+                    matched_files.append(md_file)
+            except Exception:
+                continue
+
+        if not matched_files:
+            return None
+
+        # 如果有多个匹配，返回文件最大的那个作为主文件
+        if len(matched_files) > 1:
+            return max(matched_files, key=lambda f: f.stat().st_size)
+
+        return matched_files[0]
+
+    def exists(self, table_name: str, business_domain: str = None) -> bool:
+        """
+        检查数据源是否存在
+        如果指定business_domain，仅检查该业务域下
+        否则全局检查所有业务域
+        """
+        if business_domain is not None:
+            return self._get_data_source_path(table_name, business_domain).exists()
+        return self.find_data_source(table_name) is not None
 
     def create_data_source(self, data: Dict[str, Any], business_domain: str) -> Path:
         """创建新的数据源文件"""
@@ -51,13 +84,37 @@ class DataSourceManager:
         return merged_content, update_points
 
     def update_data_source(self, table_name: str, business_domain: str, new_data: Dict[str, Any]) -> Tuple[Path, List[str]]:
-        """更新现有数据源文件"""
-        file_path = self._get_data_source_path(table_name, business_domain)
-        old_content = file_path.read_text(encoding="utf-8")
+        """
+        更新现有数据源文件
+        优先全局查找已存在的文件，不存在则在指定business_domain下创建
+        """
+        # 先全局查找是否已存在该表
+        existing_file = self.find_data_source(table_name)
+        if existing_file:
+            file_path = existing_file
+        else:
+            file_path = self._get_data_source_path(table_name, business_domain)
 
+        old_content = file_path.read_text(encoding="utf-8")
         merged_content, update_points = self.merge_data_source(old_content, new_data)
         file_path.write_text(merged_content, encoding="utf-8")
         return file_path, update_points
+
+    def create_or_update_data_source(self, table_name: str, business_domain: str, new_data: Dict[str, Any]) -> Tuple[Path, str, List[str]]:
+        """
+        智能创建或更新数据源
+        如果全局已存在则更新，否则创建
+        返回 (文件路径, 操作类型, 更新点列表)
+        """
+        existing_file = self.find_data_source(table_name)
+        if existing_file:
+            # 已存在，执行更新
+            file_path, update_points = self.update_data_source(table_name, business_domain, new_data)
+            return file_path, "更新数据源", update_points
+        else:
+            # 不存在，新建
+            file_path = self.create_data_source(new_data, business_domain)
+            return file_path, "新建数据源", []
 
     def _generate_markdown(self, data: Dict[str, Any]) -> str:
         """生成数据源文件的Markdown内容"""

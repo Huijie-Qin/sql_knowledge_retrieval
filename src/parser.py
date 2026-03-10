@@ -175,7 +175,7 @@ class FileParser:
         # 第二轮：深度信息抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round2", content=content, filename=filename, round1_result=json.dumps(round1, ensure_ascii=False))
+                prompt = self.prompt_manager.get_prompt("parse_sql_round2", content=content, filename=filename)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round2 = self._parse_json_safely(response)
                 rounds.append(round2)
@@ -189,9 +189,7 @@ class FileParser:
         # 第三轮：补充验证抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round3", content=content, filename=filename,
-                                                      round1_result=json.dumps(round1, ensure_ascii=False),
-                                                      round2_result=json.dumps(round2, ensure_ascii=False))
+                prompt = self.prompt_manager.get_prompt("parse_sql_round3", content=content, filename=filename)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round3 = self._parse_json_safely(response)
                 rounds.append(round3)
@@ -225,7 +223,7 @@ class FileParser:
         # 第二轮：深度信息抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round2", content=content, round1_result=json.dumps(round1, ensure_ascii=False))
+                prompt = self.prompt_manager.get_prompt("parse_md_round2", content=content)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round2 = self._parse_json_safely(response)
                 rounds.append(round2)
@@ -239,9 +237,7 @@ class FileParser:
         # 第三轮：补充验证抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round3", content=content,
-                                                      round1_result=json.dumps(round1, ensure_ascii=False),
-                                                      round2_result=json.dumps(round2, ensure_ascii=False))
+                prompt = self.prompt_manager.get_prompt("parse_md_round3", content=content)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round3 = self._parse_json_safely(response)
                 rounds.append(round3)

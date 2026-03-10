@@ -9,18 +9,10 @@
     {
       "table_name": "表名（必须填写，用于合并匹配）",
       "data_quality": {
-        "data_source": "数据来源说明",
-        "accuracy": "数据准确性说明",
-        "completeness": "数据完整性说明",
-        "timeliness": "数据时效性说明",
-        "consistency": "数据一致性说明",
-        "quality_check_rules": [
-          {
-            "rule_name": "规则名称",
-            "rule_description": "规则描述",
-            "check_method": "检查方法"
-          }
-        ]
+        "daily_records": "日记录数",
+        "daily_users": "日覆盖用户数",
+        "coverage": "数据覆盖情况",
+        "timeliness": "上报及时性"
       },
       "related_cases": [
         {
@@ -42,7 +34,8 @@
 2. 确保JSON格式正确，没有语法错误
 3. 如果某个字段没有对应信息，填空字符串""
 4. 数组类型字段如果没有相关信息则返回空数组[]
-5. 质量检查规则和关联案例都需要尽可能完整抽取
+5. 数据质量字段和关联案例都需要尽可能完整抽取
 
-### 待解析文档内容：
-{{ document_content }}
+### 待解析文档信息：
+文件名: {{ filename }}
+文档内容: {{ content }}

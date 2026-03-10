@@ -5,25 +5,21 @@
 ### 输出JSON结构：
 ```json
 {
+  "business_domain": "识别所属业务域（广告/应用/音乐/公共/全域搜索/电商/其他）",
   "data_sources": [
     {
-      "table_name": "表名（必须填写，用于合并匹配）",
-      "basic_info": {
-        "document_name": "文档名称",
-        "business_scenario": "业务场景描述",
-        "purpose": "文档用途说明",
-        "author": "作者/负责人",
-        "create_time": "创建时间",
-        "last_update_time": "最后更新时间",
-        "version": "版本号"
-      },
+      "table_name": "完整表名（如：biads.ads_persona_daas_common_pre_traffic_insight_dm）",
+      "database": "数据库名（从表名前缀提取，如biads）",
+      "snowflake_layer": "雪花层（从表名和内容推断，如：ADS（应用数据层）- DAAS画像/流量洞察、DWD（明细数据层）等，没有则留空）",
+      "partition_field": "分区字段（从SQL的WHERE条件中提取，如pt_d）",
+      "main_usage": "主要用途（从案例文件中提取并推理得到的表的主要用途）",
+      "description": "数据源描述",
       "fields": [
         {
           "name": "字段名",
           "description": "字段描述",
-          "type": "字段类型",
-          "is_primary_key": "是否主键（true/false）",
-          "is_nullable": "是否可为空（true/false）"
+          "usage": "用途说明",
+          "enum_values": "字段的常用枚举值及含义，格式如：枚举值1:含义1,枚举值2:含义2，没有则留空"
         }
       ]
     }

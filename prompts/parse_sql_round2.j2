@@ -10,10 +10,9 @@
       "table_name": "表名（必须填写，用于合并匹配）",
       "sql_examples": [
         {
-          "name": "示例名称",
-          "description": "示例描述",
-          "sql": "SQL代码内容",
-          "expected_output": "预期输出说明"
+          "name": "示例名称（详细描述这个SQL的用途）",
+          "sql": "SQL代码",
+          "description": "详细的SQL示例说明，包括：适用场景、输入参数、输出结果、统计维度等信息"
         }
       ],
       "usage_instructions": "使用说明，详细描述该数据源的使用方法",
@@ -21,6 +20,13 @@
       "key_query_patterns": [
         "关键查询模式1（如：按日期分区查询、按事件类型分组统计、按品类维度聚合等，每条用一句话描述）",
         "关键查询模式2"
+      ],
+      "common_related_tables": [
+        {
+          "table_name": "关联表名",
+          "join_field": "关联字段",
+          "usage": "关联用途说明"
+        }
       ],
       "typical_application_scenarios": [
         "典型应用场景1（如：用户行为分析、交易报表统计、运营效果评估等，每条用一句话描述）",

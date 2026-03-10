@@ -19,7 +19,15 @@
       "Bash(python3 -m pytest:*)",
       "Bash(mypy:*)",
       "Bash(python:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git push:*)",
+      "Bash(wait:*)",
+      "Bash(lsof:*)",
+      "Bash(kill:*)",
+      "Bash(USE_MULTI_ROUND_EXTRACTION=false python test_single_file.py 案例/ads_ba_adv_ecommerce_channel_paid_analysis_dm.sql 2>&1:*)",
+      "Bash(python3:*)",
+      "Bash(USE_MULTI_ROUND_EXTRACTION=false python3 -c \"import os; print\\(''USE_MULTI_ROUND_EXTRACTION:'', os.getenv\\(''USE_MULTI_ROUND_EXTRACTION''\\)\\)\")",
+      "Bash(USE_MULTI_ROUND_EXTRACTION=false python3:*)"
     ]
   }
 }

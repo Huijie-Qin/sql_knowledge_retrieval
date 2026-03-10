@@ -236,3 +236,123 @@ def test_update_data_source(mock_settings, mock_prompt_manager, mock_llm_client)
     file_path.unlink()
     file_path.parent.rmdir()
     Path(mock_settings.output_dir).rmdir()
+
+
+@patch('src.data_source_manager.LLMClient')
+@patch('src.data_source_manager.PromptManager')
+@patch('src.data_source_manager.settings')
+def test_generate_markdown(mock_settings, mock_prompt_manager, mock_llm_client):
+    # Mock settings
+    mock_settings.output_dir = "/tmp/test_output"
+
+    manager = DataSourceManager()
+    test_data = {
+        "table_name": "test.dwd_complete_table",
+        "name": "完整测试表",
+        "description": "用于测试完整markdown生成的测试表",
+        "business_domain": "测试",
+        "fields": [
+            {"name": "id", "description": "主键", "usage": "唯一标识", "enum_values": ""},
+            {"name": "user_id", "description": "用户ID", "usage": "关联用户表", "enum_values": ""},
+            {"name": "event_type", "description": "事件类型", "usage": "区分不同业务事件", "enum_values": "click:点击, view:浏览, purchase:购买"}
+        ],
+        "sql_examples": [
+            {
+                "name": "查询用户活跃事件",
+                "description": "统计用户每天的活跃事件数",
+                "sql": "SELECT user_id, date, COUNT(*) as event_count FROM test.dwd_complete_table WHERE event_type = 'click' GROUP BY user_id, date"
+            }
+        ],
+        "usage_instructions": "该表主要用于用户行为分析，建议按日期分区查询",
+        "notes": "数据延迟为T+1，凌晨3点完成前一天的数据同步",
+        "key_query_patterns": [
+            "按用户ID分组统计行为次数",
+            "按事件类型过滤查询特定行为",
+            "按日期范围统计趋势"
+        ],
+        "common_related_tables": [
+            {"table_name": "test.dim_user", "join_field": "user_id", "usage": "关联用户属性信息"},
+            {"table_name": "test.dwd_user_payment", "join_field": "user_id", "usage": "关联支付数据进行转化分析"}
+        ],
+        "typical_application_scenarios": [
+            "用户活跃度分析",
+            "用户行为路径分析",
+            "营销活动效果评估",
+            "产品功能使用率统计"
+        ],
+        "data_quality": {
+            "daily_records": "1000万",
+            "daily_users": "500万",
+            "coverage": "覆盖95%的活跃用户行为",
+            "timeliness": "T+1更新，每日凌晨3点完成"
+        },
+        "related_cases": [
+            {"name": "用户活跃度日报", "type": "分析报表", "scenario": "每日计算用户活跃指标"},
+            {"name": "营销活动效果分析", "type": "专项分析", "scenario": "评估营销活动带来的用户行为变化"}
+        ]
+    }
+
+    # Generate markdown
+    content = manager._generate_markdown(test_data)
+
+    # Verify all sections are present
+    assert "# test.dwd_complete_table" in content
+
+    # Chapter 1: 数据源基本信息
+    assert "## 1.数据源基本信息" in content
+    assert "### 1.1.数据源名称" in content
+    assert "完整测试表" in content
+    assert "### 1.2.数据源描述" in content
+    assert "用于测试完整markdown生成的测试表" in content
+    assert "### 1.3.业务域" in content
+    assert "测试" in content
+
+    # Chapter 2: 数据表结构
+    assert "## 2.数据表结构" in content
+    assert "### 2.1.表名" in content
+    assert "test.dwd_complete_table" in content
+    assert "### 2.2.关键字段" in content
+    assert "|id|主键|唯一标识||" in content
+    assert "|user_id|用户ID|关联用户表||" in content
+    assert "|event_type|事件类型|区分不同业务事件|click:点击, view:浏览, purchase:购买|" in content
+
+    # Chapter 3: SQL使用示例
+    assert "## 3.SQL使用示例" in content
+    assert "### 3.1.查询用户活跃事件" in content
+    assert "统计用户每天的活跃事件数" in content
+    assert "```sql" in content
+    assert "SELECT user_id, date, COUNT(*) as event_count FROM test.dwd_complete_table WHERE event_type = 'click' GROUP BY user_id, date" in content
+
+    # Chapter 4: 使用说明和注意事项
+    assert "## 4.使用说明和注意事项" in content
+    assert "### 4.1.使用说明" in content
+    assert "该表主要用于用户行为分析，建议按日期分区查询" in content
+    assert "### 4.2.注意事项" in content
+    assert "数据延迟为T+1，凌晨3点完成前一天的数据同步" in content
+    assert "### 4.3.关键的查询模式" in content
+    assert "- 按用户ID分组统计行为次数" in content
+    assert "- 按事件类型过滤查询特定行为" in content
+    assert "- 按日期范围统计趋势" in content
+    assert "### 4.4.常用关联表" in content
+    assert "|test.dim_user|user_id|关联用户属性信息|" in content
+    assert "|test.dwd_user_payment|user_id|关联支付数据进行转化分析|" in content
+    assert "### 4.5.典型应用场景" in content
+    assert "- 用户活跃度分析" in content
+    assert "- 用户行为路径分析" in content
+    assert "- 营销活动效果评估" in content
+    assert "- 产品功能使用率统计" in content
+
+    # Chapter 5: 数据质量说明
+    assert "## 5.数据质量说明" in content
+    assert "### 5.1.数据量" in content
+    assert "- 日记录数：1000万" in content
+    assert "- 日覆盖用户数：500万" in content
+    assert "### 5.2.数据覆盖情况" in content
+    assert "覆盖95%的活跃用户行为" in content
+    assert "### 5.3.上报及时性" in content
+    assert "T+1更新，每日凌晨3点完成" in content
+
+    # Chapter 6: 关联案例
+    assert "## 6.关联案例" in content
+    assert "|用户活跃度日报|分析报表|每日计算用户活跃指标|" in content
+    assert "|营销活动效果分析|专项分析|评估营销活动带来的用户行为变化|" in content

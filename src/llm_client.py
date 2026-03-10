@@ -21,7 +21,7 @@ class LLMClient:
             model=self.model,
             messages=messages,
             temperature=0.1,
-            max_tokens=8192,
+            max_tokens=settings.llm_max_tokens,
             stream=True,
             timeout=1200
         )

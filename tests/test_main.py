@@ -56,7 +56,7 @@ def test_process_md_file(mock_dependencies):
     test_file.write_text(test_content, encoding="utf-8")
 
     # Mock parse result
-    mock_parser.parse_md.return_value = {
+    mock_parser.parse.return_value = {
         "business_domain": "电商",
         "data_sources": [
             {
@@ -68,16 +68,19 @@ def test_process_md_file(mock_dependencies):
     }
 
     # Mock data source manager
-    mock_ds_manager.exists.return_value = False
-    mock_ds_manager.create_data_source.return_value = Path("数据源/电商/order.md")
+    mock_ds_manager.create_or_update_data_source.return_value = (Path("数据源/电商/order.md"), "新建数据源", [])
 
     # Process the file
     parser.process_file(test_file)
 
     # Verify calls
-    mock_parser.parse_md.assert_called_once_with(test_content)
-    mock_ds_manager.exists.assert_called_once_with("order", "电商")
-    mock_ds_manager.create_data_source.assert_called_once()
+    mock_parser.parse.assert_called_once_with(test_content, "md")
+    mock_ds_manager.create_or_update_data_source.assert_called_once_with("order", "电商", {
+        "table_name": "order",
+        "description": "订单表",
+        "fields": [],
+        "business_domain": "电商"
+    })
     mock_progress.add_data_source_index.assert_called_once()
     mock_progress.add_parse_record.assert_called_once()
     mock_progress.mark_file_processed.assert_called_once_with(test_file)
@@ -95,7 +98,7 @@ def test_process_sql_file(mock_dependencies):
     test_file.write_text(test_content, encoding="utf-8")
 
     # Mock parse result
-    mock_parser.parse_sql.return_value = {
+    mock_parser.parse.return_value = {
         "business_domain": "其他",
         "data_sources": [
             {
@@ -107,16 +110,19 @@ def test_process_sql_file(mock_dependencies):
     }
 
     # Mock data source manager (exists, so update)
-    mock_ds_manager.exists.return_value = True
-    mock_ds_manager.update_data_source.return_value = (Path("数据源/其他/user.md"), ["更新描述"])
+    mock_ds_manager.create_or_update_data_source.return_value = (Path("数据源/其他/user.md"), "更新数据源", ["更新描述"])
 
     # Process the file
     parser.process_file(test_file)
 
     # Verify calls
-    mock_parser.parse_sql.assert_called_once_with(test_content, "test.sql")
-    mock_ds_manager.exists.assert_called_once_with("user", "其他")
-    mock_ds_manager.update_data_source.assert_called_once()
+    mock_parser.parse.assert_called_once_with(test_content, "sql", "test.sql")
+    mock_ds_manager.create_or_update_data_source.assert_called_once_with("user", "其他", {
+        "table_name": "user",
+        "description": "用户表",
+        "fields": [],
+        "business_domain": "其他"
+    })
     mock_progress.add_data_source_index.assert_called_once()
     mock_progress.add_parse_record.assert_called_once()
     mock_progress.mark_file_processed.assert_called_once_with(test_file)
@@ -135,8 +141,7 @@ def test_process_unsupported_file(mock_dependencies, capfd):
     parser.process_file(test_file)
 
     # Verify no parsing was done
-    mock_parser.parse_md.assert_not_called()
-    mock_parser.parse_sql.assert_not_called()
+    mock_parser.parse.assert_not_called()
     mock_progress.mark_file_processed.assert_not_called()
 
     # Check output

@@ -166,10 +166,10 @@ class DataSourceManager:
             md += "\n"
 
         # 典型应用场景
-        scenarios = data.get("typical_application_scenarios", [])
-        if scenarios:
+        typical_scenarios = data.get("typical_application_scenarios", [])
+        if typical_scenarios:
             md += "### 4.5.典型应用场景\n"
-            for scenario in scenarios:
+            for scenario in typical_scenarios:
                 md += f"- {scenario}\n"
             md += "\n"
 

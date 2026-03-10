@@ -5,24 +5,25 @@
 ### 输出JSON结构：
 ```json
 {
-  "sql_examples": [
+  "data_sources": [
     {
-      "example_name": "示例名称",
-      "example_description": "示例描述",
-      "sql_code": "SQL代码内容",
-      "expected_output": "预期输出说明"
+      "table_name": "表名（必须填写，用于合并匹配）",
+      "sql_examples": [
+        {
+          "name": "示例名称",
+          "description": "示例描述",
+          "sql": "SQL代码内容",
+          "expected_output": "预期输出说明"
+        }
+      ],
+      "usage_instructions": "使用说明，详细描述该数据源的使用方法",
+      "notes": "注意事项，描述使用该数据源时需要特别注意的问题",
+      "key_query_patterns": [
+        "关键查询模式1（如：按日期分区查询、按事件类型分组统计、按品类维度聚合等，每条用一句话描述）",
+        "关键查询模式2"
+      ]
     }
-  ],
-  "usage_instructions": {
-    "prerequisites": "使用前提条件",
-    "execution_steps": "执行步骤说明",
-    "parameter_description": "参数说明",
-    "typical_application_scenarios": [
-      "典型应用场景1",
-      "典型应用场景2"
-    ],
-    "notes": "注意事项"
-  }
+  ]
 }
 ```
 

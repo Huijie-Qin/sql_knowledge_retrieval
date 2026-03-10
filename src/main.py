@@ -26,11 +26,11 @@ class DataSourceParser:
         # 读取文件内容
         content = file_path.read_text(encoding="utf-8")
 
-        # 解析文件
+        # 解析文件：根据配置自动选择单轮/多轮模式
         if file_path.suffix == ".md":
-            parse_result = self.parser.parse_md(content)
+            parse_result = self.parser.parse(content, "md")
         elif file_path.suffix == ".sql":
-            parse_result = self.parser.parse_sql(content, file_path.name)
+            parse_result = self.parser.parse(content, "sql", file_path.name)
         else:
             print(f"Unsupported file type: {file_path.suffix}")
             return

@@ -33,6 +33,10 @@
 3. 如果某个字段没有对应信息，填空字符串""
 4. 时间格式统一为"YYYY-MM-DD"，如果信息不全则留空
 5. 布尔值必须是小写的true或false，不要用字符串
+{% if extracted_tables %}
+6. 已抽取的表名：{{ extracted_tables | join(', ') }}，请不要重复抽取这些表
+7. 本次最多抽取{{ max_tables | default(5) }}个表，优先抽取未在上述列表中的表
+{% endif %}
 
 ### 待解析文档信息：
 文件名: {{ filename }}

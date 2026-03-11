@@ -34,6 +34,10 @@
 4. 时间格式统一为"YYYY-MM-DD"，如果信息不全则留空
 5. 布尔值必须是小写的true或false，不要用字符串
 6. 从Markdown表格中准确提取表结构信息
+{% if extracted_tables %}
+7. 已抽取的表名：{{ extracted_tables | join(', ') }}，请不要重复抽取这些表
+8. 本次最多抽取{{ max_tables | default(5) }}个表，优先抽取未在上述列表中的表
+{% endif %}
 
 ### 待解析文档内容：
 {{ content }}

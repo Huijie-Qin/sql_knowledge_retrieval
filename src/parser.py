@@ -156,99 +156,118 @@ class FileParser:
                 print(f"Parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
 
     def parse_sql_multi_round(self, content: str, filename: str) -> Dict[str, Any]:
-        """分三轮抽取SQL文件信息，确保信息完整"""
+        """批次化抽取SQL文件信息，每轮最多抽取5个表，直到所有表抽取完成"""
         rounds = []
-        # 第一轮：基础信息抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round1", content=content, filename=filename)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round1 = self._parse_json_safely(response)
-                rounds.append(round1)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"SQL Round 1 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+        extracted_tables = set()
+        max_tables_per_round = 5
+        max_rounds = 10  # 防止无限循环
+        round_num = 0
 
-        # 第二轮：深度信息抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round2", content=content, filename=filename)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round2 = self._parse_json_safely(response)
-                rounds.append(round2)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"SQL Round 2 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+        while round_num < max_rounds:
+            round_num += 1
+            # 第一轮使用round1模板，后续轮次继续使用round1模板但带上已抽取表名
+            for attempt in range(self.max_retries):
+                try:
+                    # 构造prompt参数
+                    prompt_kwargs = {
+                        "content": content,
+                        "filename": filename,
+                        "extracted_tables": list(extracted_tables),
+                        "max_tables": max_tables_per_round
+                    }
 
-        # 第三轮：补充验证抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round3", content=content, filename=filename)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round3 = self._parse_json_safely(response)
-                rounds.append(round3)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"SQL Round 3 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+                    prompt = self.prompt_manager.get_prompt("parse_sql_round1", **prompt_kwargs)
+                    response = self.llm_client.chat(prompt, self.system_prompt)
+                    round_data = self._parse_json_safely(response)
+                    rounds.append(round_data)
 
-        # 合并三轮结果
+                    # 提取本轮新抽取的表名
+                    new_tables = set()
+                    if "data_sources" in round_data and isinstance(round_data["data_sources"], list):
+                        for ds in round_data["data_sources"]:
+                            if "table_name" in ds and ds["table_name"]:
+                                new_tables.add(ds["table_name"])
+
+                    # 检查是否有新表抽取
+                    new_tables_found = new_tables - extracted_tables
+                    if not new_tables_found:
+                        print(f"SQL Batch {round_num}: No new tables found, extraction completed")
+                        return self._merge_multi_round_data(rounds)
+
+                    # 更新已抽取表集合
+                    extracted_tables.update(new_tables_found)
+                    print(f"SQL Batch {round_num}: Extracted {len(new_tables_found)} new tables, total extracted: {len(extracted_tables)}")
+
+                    # 如果本轮抽取的表少于最大限制，说明可能没有更多表了
+                    if len(new_tables_found) < max_tables_per_round:
+                        print(f"SQL Batch {round_num}: Extracted less than {max_tables_per_round} tables, extraction completed")
+                        return self._merge_multi_round_data(rounds)
+
+                    break
+                except Exception as e:
+                    if attempt == self.max_retries - 1:
+                        raise
+                    time.sleep(1)
+                    print(f"SQL Batch {round_num} parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+
+        print(f"SQL Extraction stopped after {max_rounds} rounds to prevent infinite loop")
         return self._merge_multi_round_data(rounds)
 
     def parse_md_multi_round(self, content: str) -> Dict[str, Any]:
-        """分三轮抽取MD文件信息，确保信息完整"""
+        """批次化抽取MD文件信息，每轮最多抽取5个表，直到所有表抽取完成"""
         rounds = []
-        # 第一轮：基础信息抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round1", content=content)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round1 = self._parse_json_safely(response)
-                rounds.append(round1)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"MD Round 1 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+        extracted_tables = set()
+        max_tables_per_round = 5
+        max_rounds = 10  # 防止无限循环
+        round_num = 0
 
-        # 第二轮：深度信息抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round2", content=content)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round2 = self._parse_json_safely(response)
-                rounds.append(round2)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"MD Round 2 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+        while round_num < max_rounds:
+            round_num += 1
+            # 第一轮使用round1模板，后续轮次继续使用round1模板但带上已抽取表名
+            for attempt in range(self.max_retries):
+                try:
+                    # 构造prompt参数
+                    prompt_kwargs = {
+                        "content": content,
+                        "extracted_tables": list(extracted_tables),
+                        "max_tables": max_tables_per_round
+                    }
 
-        # 第三轮：补充验证抽取
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round3", content=content)
-                response = self.llm_client.chat(prompt, self.system_prompt)
-                round3 = self._parse_json_safely(response)
-                rounds.append(round3)
-                break
-            except Exception as e:
-                if attempt == self.max_retries - 1:
-                    raise
-                time.sleep(1)
-                print(f"MD Round 3 parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+                    prompt = self.prompt_manager.get_prompt("parse_md_round1", **prompt_kwargs)
+                    response = self.llm_client.chat(prompt, self.system_prompt)
+                    round_data = self._parse_json_safely(response)
+                    rounds.append(round_data)
 
-        # 合并三轮结果
+                    # 提取本轮新抽取的表名
+                    new_tables = set()
+                    if "data_sources" in round_data and isinstance(round_data["data_sources"], list):
+                        for ds in round_data["data_sources"]:
+                            if "table_name" in ds and ds["table_name"]:
+                                new_tables.add(ds["table_name"])
+
+                    # 检查是否有新表抽取
+                    new_tables_found = new_tables - extracted_tables
+                    if not new_tables_found:
+                        print(f"MD Batch {round_num}: No new tables found, extraction completed")
+                        return self._merge_multi_round_data(rounds)
+
+                    # 更新已抽取表集合
+                    extracted_tables.update(new_tables_found)
+                    print(f"MD Batch {round_num}: Extracted {len(new_tables_found)} new tables, total extracted: {len(extracted_tables)}")
+
+                    # 如果本轮抽取的表少于最大限制，说明可能没有更多表了
+                    if len(new_tables_found) < max_tables_per_round:
+                        print(f"MD Batch {round_num}: Extracted less than {max_tables_per_round} tables, extraction completed")
+                        return self._merge_multi_round_data(rounds)
+
+                    break
+                except Exception as e:
+                    if attempt == self.max_retries - 1:
+                        raise
+                    time.sleep(1)
+                    print(f"MD Batch {round_num} parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
+
+        print(f"MD Extraction stopped after {max_rounds} rounds to prevent infinite loop")
         return self._merge_multi_round_data(rounds)
 
     def _merge_multi_round_data(self, rounds: list) -> Dict[str, Any]:

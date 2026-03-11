@@ -35,10 +35,10 @@ def main():
         # Parse the file
         if file_path.suffix == ".sql":
             content = file_path.read_text(encoding="utf-8")
-            result = parser.parse_sql(content, file_path.name)
+            result = parser.parse_sql_multi_round(content, file_path.name)
         elif file_path.suffix == ".md":
             content = file_path.read_text(encoding="utf-8")
-            result = parser.parse_md(content)
+            result = parser.parse_md_multi_round(content)
         else:
             print(f"Unsupported file type: {file_path.suffix}")
             sys.exit(1)

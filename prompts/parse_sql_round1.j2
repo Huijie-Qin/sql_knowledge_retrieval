@@ -1,4 +1,4 @@
-我需要你解析SQL相关的文档内容，抽取以下关键信息，以JSON格式返回。
+你是一名专业的数据仓库元数据分析师，擅长从SQL文档中精准、完整地提取数据表的元数据信息。请严格按照要求解析SQL内容，抽取关键信息，以JSON格式返回。
 
 ### 抽取章节：基本信息 + 表结构（章节1+2）
 
@@ -27,16 +27,54 @@
 }
 ```
 
-### 要求：
+### 字段明确定义：
+1. **business_domain**：从文件名和内容推断业务域，可选值：广告/应用/音乐/公共/全域搜索/电商/其他，必须从这些选项中选择
+2. **snowflake_layer**：从表名和内容推断雪花层，可选值：ADS（应用数据层）/DWD（明细数据层）/DWS（汇总数据层）/DIM（维度层）/ODS（原始数据层），没有则留空
+3. **partition_field**：从SQL的WHERE条件中提取分区字段，常见如pt_d、dt、date等，没有则留空
+4. **fields.enum_values**：仅提取SQL中明确出现的枚举值，如从`event_type IN ('exposure', 'click')`中提取"exposure:曝光,click:点击"，没有则留空，禁止编造枚举值
+
+### 约束规则：
 1. 严格按照上述JSON结构输出，不要添加额外的字段
-2. 确保JSON格式正确，没有语法错误
-3. 如果某个字段没有对应信息，填空字符串""
+2. 确保JSON格式正确，没有语法错误，禁止输出JSON以外的任何解释性文字
+3. 如果某个字段没有对应信息，填空字符串""，数组类型字段没有信息则返回空数组[]
 4. 时间格式统一为"YYYY-MM-DD"，如果信息不全则留空
 5. 布尔值必须是小写的true或false，不要用字符串
+6. 禁止编造不存在的表名、字段名、枚举值或描述，所有信息必须从提供的文档内容中提取
 {% if extracted_tables %}
-6. 已抽取的表名：{{ extracted_tables | join(', ') }}，请不要重复抽取这些表
-7. 本次最多抽取{{ max_tables | default(5) }}个表，优先抽取未在上述列表中的表
+7. 已抽取的表名：{{ extracted_tables | join(', ') }}，请不要重复抽取这些表
+8. 本次最多抽取{{ max_tables | default(5) }}个表，优先抽取未在上述列表中的表
 {% endif %}
+
+### 输出示例：
+```json
+{
+  "business_domain": "电商",
+  "data_sources": [
+    {
+      "table_name": "biads.ads_ba_adv_ecommerce_category_channel_paid_analysis_dm",
+      "database": "biads",
+      "snowflake_layer": "ADS（应用数据层）- 广告分析",
+      "partition_field": "pt_d",
+      "main_usage": "统计广告渠道各层级品类的转化及消耗情况",
+      "description": "广告渠道电商品类付费分析明细数据表",
+      "fields": [
+        {
+          "name": "event_type",
+          "description": "用户行为事件类型",
+          "usage": "区分用户的曝光、点击、付费行为",
+          "enum_values": "exposure:曝光,click:点击,paid:付费"
+        },
+        {
+          "name": "dwagg_actual_spent",
+          "description": "广告实际消耗金额",
+          "usage": "统计对应维度的广告投放总成本",
+          "enum_values": ""
+        }
+      ]
+    }
+  ]
+}
+```
 
 ### 待解析文档信息：
 文件名: {{ filename }}

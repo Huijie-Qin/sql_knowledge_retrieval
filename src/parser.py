@@ -241,9 +241,9 @@ class FileParser:
 
     def parse_sql_multi_round(self, content: str, filename: str) -> Dict[str, Any]:
         """分阶段抽取SQL文件信息：先批次发现所有表，再对每个表执行完整三轮抽取"""
-        # 第一阶段：批次发现所有表名
-        print("Starting SQL table discovery phase...")
-        all_tables = self._discover_all_tables_sql(content, filename)
+        # 第一阶段：快速抽取所有表名
+        print("Starting SQL table name extraction...")
+        all_tables = self._extract_table_names_sql(content, filename)
         if not all_tables:
             print("No tables found in SQL file")
             return {}
@@ -357,9 +357,9 @@ class FileParser:
 
     def parse_md_multi_round(self, content: str) -> Dict[str, Any]:
         """分阶段抽取MD文件信息：先批次发现所有表，再对每个表执行完整三轮抽取"""
-        # 第一阶段：批次发现所有表名
-        print("Starting MD table discovery phase...")
-        all_tables = self._discover_all_tables_md(content)
+        # 第一阶段：快速抽取所有表名
+        print("Starting MD table name extraction...")
+        all_tables = self._extract_table_names_md(content)
         if not all_tables:
             print("No tables found in MD file")
             return {}

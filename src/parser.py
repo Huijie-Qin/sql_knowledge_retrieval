@@ -195,7 +195,8 @@ class FileParser:
                     content=content,
                     filename=filename,
                     extracted_tables=[],  # 不需要去重，专门抽取该表
-                    max_tables=1  # 只抽取目标表
+                    max_tables=1,  # 只抽取目标表
+                    target_table_name=table_name
                 )
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round1 = self._parse_json_safely(response)
@@ -210,7 +211,7 @@ class FileParser:
         # 第二轮：深度信息抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round2", content=content, filename=filename)
+                prompt = self.prompt_manager.get_prompt("parse_sql_round2", content=content, filename=filename, target_table_name=table_name)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round2 = self._parse_json_safely(response)
                 rounds.append(round2)
@@ -224,7 +225,7 @@ class FileParser:
         # 第三轮：补充验证抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_sql_round3", content=content, filename=filename)
+                prompt = self.prompt_manager.get_prompt("parse_sql_round3", content=content, filename=filename, target_table_name=table_name)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round3 = self._parse_json_safely(response)
                 rounds.append(round3)
@@ -310,7 +311,8 @@ class FileParser:
                     "parse_md_round1",
                     content=content,
                     extracted_tables=[],  # 不需要去重，专门抽取该表
-                    max_tables=1  # 只抽取目标表
+                    max_tables=1,  # 只抽取目标表
+                    target_table_name=table_name
                 )
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round1 = self._parse_json_safely(response)
@@ -325,7 +327,7 @@ class FileParser:
         # 第二轮：深度信息抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round2", content=content)
+                prompt = self.prompt_manager.get_prompt("parse_md_round2", content=content, target_table_name=table_name)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round2 = self._parse_json_safely(response)
                 rounds.append(round2)
@@ -339,7 +341,7 @@ class FileParser:
         # 第三轮：补充验证抽取
         for attempt in range(self.max_retries):
             try:
-                prompt = self.prompt_manager.get_prompt("parse_md_round3", content=content)
+                prompt = self.prompt_manager.get_prompt("parse_md_round3", content=content, target_table_name=table_name)
                 response = self.llm_client.chat(prompt, self.system_prompt)
                 round3 = self._parse_json_safely(response)
                 rounds.append(round3)

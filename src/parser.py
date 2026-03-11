@@ -155,60 +155,32 @@ class FileParser:
                 time.sleep(1)  # 重试前等待
                 print(f"Parse failed, retrying ({attempt+1}/{self.max_retries}): {e}")
 
-    def _discover_all_tables_sql(self, content: str, filename: str) -> list:
-        """批次化发现所有SQL文件中的表名，仅执行Round1抽取"""
-        discovered_tables = set()
-        max_tables_per_round = 5
-        max_rounds = 10  # 防止无限循环
-        round_num = 0
+    def _extract_table_names_sql(self, content: str, filename: str) -> list:
+        """快速抽取SQL文件中所有表名，使用专用轻量化prompt"""
+        for attempt in range(self.max_retries):
+            try:
+                prompt = self.prompt_manager.get_prompt(
+                    "extract_table_names_sql",
+                    content=content,
+                    filename=filename
+                )
+                response = self.llm_client.chat(prompt, self.system_prompt)
+                result = self._parse_json_safely(response)
 
-        while round_num < max_rounds:
-            round_num += 1
-            for attempt in range(self.max_retries):
-                try:
-                    # 构造prompt参数
-                    prompt_kwargs = {
-                        "content": content,
-                        "filename": filename,
-                        "extracted_tables": list(discovered_tables),
-                        "max_tables": max_tables_per_round
-                    }
+                table_names = result.get("table_names", [])
+                if not isinstance(table_names, list):
+                    table_names = []
 
-                    prompt = self.prompt_manager.get_prompt("parse_sql_round1", **prompt_kwargs)
-                    response = self.llm_client.chat(prompt, self.system_prompt)
-                    round_data = self._parse_json_safely(response)
+                # 过滤空值，去重
+                table_names = list(set([t.strip() for t in table_names if t.strip()]))
+                print(f"Extracted {len(table_names)} tables from SQL file")
+                return table_names
 
-                    # 提取本轮新抽取的表名
-                    new_tables = set()
-                    if "data_sources" in round_data and isinstance(round_data["data_sources"], list):
-                        for ds in round_data["data_sources"]:
-                            if "table_name" in ds and ds["table_name"]:
-                                new_tables.add(ds["table_name"])
-
-                    # 检查是否有新表抽取
-                    new_tables_found = new_tables - discovered_tables
-                    if not new_tables_found:
-                        print(f"SQL Table Discovery Batch {round_num}: No new tables found, discovery completed")
-                        return list(discovered_tables)
-
-                    # 更新已发现表集合
-                    discovered_tables.update(new_tables_found)
-                    print(f"SQL Table Discovery Batch {round_num}: Found {len(new_tables_found)} new tables, total found: {len(discovered_tables)}")
-
-                    # 如果本轮抽取的表少于最大限制，说明可能没有更多表了
-                    if len(new_tables_found) < max_tables_per_round:
-                        print(f"SQL Table Discovery Batch {round_num}: Found less than {max_tables_per_round} tables, discovery completed")
-                        return list(discovered_tables)
-
-                    break
-                except Exception as e:
-                    if attempt == self.max_retries - 1:
-                        raise
-                    time.sleep(1)
-                    print(f"SQL Table Discovery Batch {round_num} failed, retrying ({attempt+1}/{self.max_retries}): {e}")
-
-        print(f"SQL Table Discovery stopped after {max_rounds} rounds to prevent infinite loop")
-        return list(discovered_tables)
+            except Exception as e:
+                if attempt == self.max_retries - 1:
+                    raise
+                time.sleep(1)
+                print(f"SQL table name extraction failed, retrying ({attempt+1}/{self.max_retries}): {e}")
 
     def _extract_single_table_sql(self, content: str, filename: str, table_name: str) -> Dict[str, Any]:
         """对单个表执行完整的三轮抽取，获取完整信息"""
@@ -300,59 +272,31 @@ class FileParser:
 
         return merged_result
 
-    def _discover_all_tables_md(self, content: str) -> list:
-        """批次化发现所有MD文件中的表名，仅执行Round1抽取"""
-        discovered_tables = set()
-        max_tables_per_round = 5
-        max_rounds = 10  # 防止无限循环
-        round_num = 0
+    def _extract_table_names_md(self, content: str) -> list:
+        """快速抽取MD文件中所有表名，使用专用轻量化prompt"""
+        for attempt in range(self.max_retries):
+            try:
+                prompt = self.prompt_manager.get_prompt(
+                    "extract_table_names_md",
+                    content=content
+                )
+                response = self.llm_client.chat(prompt, self.system_prompt)
+                result = self._parse_json_safely(response)
 
-        while round_num < max_rounds:
-            round_num += 1
-            for attempt in range(self.max_retries):
-                try:
-                    # 构造prompt参数
-                    prompt_kwargs = {
-                        "content": content,
-                        "extracted_tables": list(discovered_tables),
-                        "max_tables": max_tables_per_round
-                    }
+                table_names = result.get("table_names", [])
+                if not isinstance(table_names, list):
+                    table_names = []
 
-                    prompt = self.prompt_manager.get_prompt("parse_md_round1", **prompt_kwargs)
-                    response = self.llm_client.chat(prompt, self.system_prompt)
-                    round_data = self._parse_json_safely(response)
+                # 过滤空值，去重
+                table_names = list(set([t.strip() for t in table_names if t.strip()]))
+                print(f"Extracted {len(table_names)} tables from MD file")
+                return table_names
 
-                    # 提取本轮新抽取的表名
-                    new_tables = set()
-                    if "data_sources" in round_data and isinstance(round_data["data_sources"], list):
-                        for ds in round_data["data_sources"]:
-                            if "table_name" in ds and ds["table_name"]:
-                                new_tables.add(ds["table_name"])
-
-                    # 检查是否有新表抽取
-                    new_tables_found = new_tables - discovered_tables
-                    if not new_tables_found:
-                        print(f"MD Table Discovery Batch {round_num}: No new tables found, discovery completed")
-                        return list(discovered_tables)
-
-                    # 更新已发现表集合
-                    discovered_tables.update(new_tables_found)
-                    print(f"MD Table Discovery Batch {round_num}: Found {len(new_tables_found)} new tables, total found: {len(discovered_tables)}")
-
-                    # 如果本轮抽取的表少于最大限制，说明可能没有更多表了
-                    if len(new_tables_found) < max_tables_per_round:
-                        print(f"MD Table Discovery Batch {round_num}: Found less than {max_tables_per_round} tables, discovery completed")
-                        return list(discovered_tables)
-
-                    break
-                except Exception as e:
-                    if attempt == self.max_retries - 1:
-                        raise
-                    time.sleep(1)
-                    print(f"MD Table Discovery Batch {round_num} failed, retrying ({attempt+1}/{self.max_retries}): {e}")
-
-        print(f"MD Table Discovery stopped after {max_rounds} rounds to prevent infinite loop")
-        return list(discovered_tables)
+            except Exception as e:
+                if attempt == self.max_retries - 1:
+                    raise
+                time.sleep(1)
+                print(f"MD table name extraction failed, retrying ({attempt+1}/{self.max_retries}): {e}")
 
     def _extract_single_table_md(self, content: str, table_name: str) -> Dict[str, Any]:
         """对单个表执行完整的三轮抽取，获取完整信息"""
